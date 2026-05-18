@@ -1,0 +1,30 @@
+# Datasets
+dataset/raw/
+dataset/processed/
+dataset/train/
+dataset/valid/
+dataset/test/
+*.zip
+
+# Outputs
+checkpoints/
+logs/
+results/
+*.h5
+*.keras
+*.tflite
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
