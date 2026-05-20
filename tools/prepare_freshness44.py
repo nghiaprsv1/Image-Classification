@@ -44,8 +44,19 @@ random.seed(SEED)
 # ----------------------------------------------------------------------------
 # 1. Tải qua kagglehub (không cần API token)
 # ----------------------------------------------------------------------------
-def download_via_kagglehub() -> Path:
-    """Tải Freshness44 về cache của kagglehub. Trả về thư mục chứa data."""
+def download_via_kagglehub(cache_dir: Optional[Path] = None) -> Path:
+    """Tải Freshness44 về cache của kagglehub. Trả về thư mục chứa data.
+
+    Mặc định kagglehub lưu vào `~/.cache/kagglehub/` (thường là ổ C trên Windows).
+    Truyền `cache_dir` để chuyển sang ổ khác (vd ổ D).
+    """
+    # Đặt ENV trước khi import kagglehub — kagglehub đọc env này lúc import
+    if cache_dir is not None:
+        cache_dir = Path(cache_dir).resolve()
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        os.environ["KAGGLEHUB_CACHE"] = str(cache_dir)
+        print(f"[info] KAGGLEHUB_CACHE = {cache_dir}")
+
     try:
         import kagglehub
     except ImportError:
@@ -167,13 +178,16 @@ def main() -> None:
                    help="Đường dẫn Freshness44 đã tải sẵn. Bỏ trống → dùng kagglehub.")
     p.add_argument("--dst", type=Path, default=Path("dataset/raw"),
                    help="Thư mục đích (mặc định: dataset/raw)")
+    p.add_argument("--cache-dir", type=Path, default=None,
+                   help="Thư mục cache cho kagglehub (mặc định ~/.cache/kagglehub trên ổ C). "
+                        "Truyền vd 'D:/kaggle_cache' để tránh đầy ổ C.")
     p.add_argument("--mode", choices=["copy", "symlink"], default="copy",
                    help="copy (an toàn) | symlink (nhanh, ít dung lượng)")
     p.add_argument("--max-per-class", type=int, default=None,
                    help="Giới hạn số ảnh/class (vd 5000) để train nhanh")
     args = p.parse_args()
 
-    src = args.src or download_via_kagglehub()
+    src = args.src or download_via_kagglehub(cache_dir=args.cache_dir)
     if not src.exists():
         sys.exit(f"[error] Không tìm thấy {src}")
 
