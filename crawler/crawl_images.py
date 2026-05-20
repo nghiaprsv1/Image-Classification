@@ -1,7 +1,7 @@
 """
 crawler/crawl_images.py
 =======================
-Tự động thu thập ảnh rau (fresh / rotten) từ Google Images, Bing, Baidu.
+Tự động thu thập ảnh rau (fresh / rotten) từ  Bing, Baidu.
 
 Tính năng:
     * Dùng `icrawler` (không cần selenium) — nhanh, ổn định.
@@ -11,26 +11,65 @@ Tính năng:
 
 Cách dùng:
     python crawler/crawl_images.py --target 10000 --out dataset/raw
-    python crawler/crawl_images.py --per-keyword 600 --engines google,bing
+    python crawler/crawl_images.py --per-keyword 600 --engines bing
 """
 from __future__ import annotations
 
 import argparse
 import os
 import shutil
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, List
+
+# Force UTF-8 cho stdout/stderr trên Windows (tránh UnicodeEncodeError với cp1258, cp1252).
+# Phải đặt TRƯỚC mọi `print` chứa ký tự Unicode (└─ → ả ô …) và TRƯỚC khi import icrawler.
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError):
+        pass
+
+
+def _safe_print(*args, **kwargs) -> None:
+    """In an toàn — nếu console không encode được Unicode (cp1258 trên Windows),
+    fallback sang ASCII với ký tự ?  thay vì crash."""
+    try:
+        print(*args, **kwargs)
+    except UnicodeEncodeError:
+        msg = " ".join(str(a) for a in args)
+        sys.stdout.write(msg.encode("ascii", "replace").decode("ascii") + "\n")
+        sys.stdout.flush()
+
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from PIL import Image, UnidentifiedImageError
 from tqdm import tqdm
 
-# icrawler có 3 backend: Google, Bing, Baidu — dùng song song để tăng đa dạng
+# icrawler có 3 backend:  Bing, Baidu — dùng song song để tăng đa dạng
 from icrawler.builtin import BaiduImageCrawler, BingImageCrawler, GoogleImageCrawler
 
 import imagehash
+
+# ----------------------------------------------------------------------------
+# Tắt bớt log spam của icrawler (parser, downloader, … log liên tục mỗi URL fail)
+# ----------------------------------------------------------------------------
+import logging
+for name in ("icrawler", "icrawler.parser", "icrawler.downloader",
+             "icrawler.feeder", "urllib3", "PIL"):
+    logging.getLogger(name).setLevel(logging.CRITICAL)
+
+# ----------------------------------------------------------------------------
+# Tắt bớt log spam của icrawler (parser, downloader, … log liên tục mỗi URL fail)
+# ----------------------------------------------------------------------------
+import logging
+for name in ("icrawler", "icrawler.parser", "icrawler.downloader",
+             "icrawler.feeder", "urllib3", "PIL"):
+    logging.getLogger(name).setLevel(logging.CRITICAL)
 
 # ----------------------------------------------------------------------------
 # Cấu hình keyword cho từng class
@@ -128,7 +167,7 @@ def crawl_one(keyword: str, class_dir: Path, max_num: int,
     for engine_name in engines:
         Crawler = ENGINE_MAP.get(engine_name)
         if Crawler is None:
-            print(f"[skip] Unknown engine: {engine_name}")
+            _safe_print(f"[skip] Unknown engine: {engine_name}")
             continue
         try:
             crawler = Crawler(
@@ -136,9 +175,9 @@ def crawl_one(keyword: str, class_dir: Path, max_num: int,
                 feeder_threads=1,
                 parser_threads=2,
                 downloader_threads=4,
-                log_level=40,
+                log_level=50,  # CRITICAL — bớt spam log của icrawler
             )
-            print(f"  └─ [{engine_name:6s}] '{keyword}' → {per_engine} ảnh")
+            _safe_print(f"  -> [{engine_name:6s}] '{keyword}' x {per_engine}")
             crawler.crawl(
                 keyword=keyword,
                 max_num=per_engine,
@@ -146,7 +185,8 @@ def crawl_one(keyword: str, class_dir: Path, max_num: int,
                 min_size=(MIN_SIZE, MIN_SIZE),
             )
         except Exception as exc:  # noqa: BLE001
-            print(f"  [warn] {engine_name} fail trên '{keyword}': {exc}")
+            _safe_print(f"  [warn] {engine_name} fail tren '{keyword}': "
+                        f"{type(exc).__name__}")
 
     # Move tmp_dir/* → class_dir/<slug>_<idx>.<ext>, đánh số tránh trùng
     moved = 0
@@ -167,7 +207,7 @@ def crawl_one(keyword: str, class_dir: Path, max_num: int,
     except OSError:
         pass
     if moved:
-        print(f"     → moved {moved} ảnh vào {class_dir.name}/{slug}_*")
+        _safe_print(f"     -> moved {moved} anh vao {class_dir.name}/{slug}_*")
 
 
 def crawl_class(class_name: str, keywords: List[str], out_root: Path,
@@ -176,7 +216,7 @@ def crawl_class(class_name: str, keywords: List[str], out_root: Path,
     class_dir = out_root / class_name
     class_dir.mkdir(parents=True, exist_ok=True)
     per_keyword = max(50, target_per_class // len(keywords))
-    print(f"\n[crawl] class={class_name} | target={target_per_class} | per-kw={per_keyword}")
+    _safe_print(f"\n[crawl] class={class_name} | target={target_per_class} | per-kw={per_keyword}")
     for kw in keywords:
         crawl_one(kw, class_dir, per_keyword, engines)
     return class_dir
@@ -267,8 +307,8 @@ def main() -> None:
     p.add_argument("--target", type=int, default=10000,
                    help="Tổng số ảnh muốn có (chia đều 2 class)")
     p.add_argument("--out", type=Path, default=Path("dataset/raw"))
-    p.add_argument("--engines", type=str, default="google,bing,baidu",
-                   help="Comma-separated: google,bing,baidu")
+    p.add_argument("--engines", type=str, default="bing,baidu",
+                   help="Comma-separated: bing,baidu")
     p.add_argument("--skip-crawl", action="store_true",
                    help="Bỏ qua crawl, chỉ clean & thống kê")
     args = p.parse_args()
