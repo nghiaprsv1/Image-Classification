@@ -52,12 +52,13 @@ project/
 
 ## 3. Pipeline tổng thể (luồng chuẩn)
 
-1. **Lấy dữ liệu** — chọn 1 trong 2:
-   - **Khuyến nghị**: `python tools/prepare_freshness44.py` → tải Freshness44 (Kaggle, 53.6k ảnh, đã clean) và sắp xếp vào `dataset/raw/{fresh,rotten}/`
-   - Dự phòng: `python crawler/crawl_images.py` → tự crawl từ Google/Bing/Baidu
+1. **Crawl dữ liệu** → `crawler/crawl_images.py` → tự crawl từ Google + Bing + Baidu (theo yêu cầu đề bài)
+   - 41 keyword đa dạng (Anh + Việt) cho fresh/rotten
+   - Lưu `<class>/<keyword_slug>_<idx>.jpg` để biết ảnh thuộc keyword nào
+   - **Tham khảo (KHÔNG dùng cho đồ án)**: `tools/prepare_freshness44.py` — chỉ giữ làm backup nếu crawl gặp vấn đề
 2. **Clean & split** → `preprocessing/preprocess.py` → tạo `dataset/{train,valid,test}/`
    - Tỉ lệ: 70% / 15% / 15%
-   - Resize ảnh về **224x224**, normalize [0,1]
+   - Resize ảnh về **224x224**, normalize [0,1], loại trùng (perceptual hash)
 3. **Augmentation** → `preprocessing/augmentation.py` (rotation, flip, zoom, brightness, shift)
 4. **Train** → `models/train.py --model {mobilenet|resnet}`
    - Callbacks: EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard
@@ -68,13 +69,12 @@ project/
 6. **Compare** → `evaluation/plots.py` so sánh MobileNetV2 vs ResNet50
 7. **Predict** → `app/predict.py --image <path> --model <path>`
 
-## 3b. Dataset Freshness44 (chính chủ)
+## 3b. Nguồn dữ liệu
 
-- **Nguồn**: https://www.kaggle.com/datasets/siavash93/freshness44
-- **Quy mô**: 53.616 ảnh, 22 loại rau/quả, ~6.7 GB
-- **Đã có**: dedup MD5, chuẩn JPEG, label fresh/rotten đã được clean
-- **Tổng hợp từ**: Fresh and Stale Fruits and Vegetables, Fruits and Vegetables Dataset, Fresh and Rotten Fruits Dataset, FruitNet, FruitQ
-- **Script**: `tools/prepare_freshness44.py` — tải qua `kagglehub` rồi tự phân loại fresh/rotten dựa vào path
+- **Chính (theo đề bài)**: tự crawl từ Google + Bing + Baidu Images qua `icrawler`
+  - File: `crawler/crawl_images.py` — chứa danh sách 41 keyword đa dạng
+  - Lệnh: `python crawler/crawl_images.py --target 10000 --engines google,bing,baidu`
+- **Backup (chỉ tham khảo)**: Freshness44 (Kaggle, 53k ảnh, đã clean) — `tools/prepare_freshness44.py`
 
 ## 4. Quy ước
 
@@ -90,23 +90,23 @@ project/
 ## 5. Trạng thái hiện tại (cập nhật mỗi lần làm việc)
 
 - [x] **2026-05-18** — Khởi tạo cấu trúc + bộ test pytest (37 tests pass).
-- [x] **2026-05-19** — Switch dataset: Freshness44 (Kaggle, 53k ảnh) thay vì crawl.
-  - Script `tools/prepare_freshness44.py` với flag `--cache-dir`, `--max-per-class`.
-- [x] **2026-05-20** — Refactor notebooks: gộp về 2 file đầy đủ, dùng cho cả local lẫn Colab.
-  - `notebook/01_prepare.ipynb` — chuẩn bị dữ liệu (19 cells).
-  - `notebook/02_train_and_evaluate.ipynb` — train + evaluate + visualize (27 cells).
+- [x] **2026-05-19** — Thử Freshness44 (Kaggle, 53k ảnh) làm nguồn — sau đó **bỏ**, chuyển về tự crawl theo yêu cầu đề bài. Giữ `tools/prepare_freshness44.py` chỉ làm tham khảo backup.
+- [x] **2026-05-20** — Refactor notebooks: gộp về 2 file đầy đủ.
+  - `notebook/01_prepare.ipynb` — TỰ CRAWL + clean + split + visualize.
+  - `notebook/02_train_and_evaluate.ipynb` — train + evaluate + visualize.
   - Đã xoá `experiment.ipynb` và `colab_train.ipynb` cũ.
-- [ ] Bước kế tiếp: chạy 02_train_and_evaluate trên dataset 15k đã chuẩn bị.
+- [x] **2026-05-21** — Mở rộng `crawler/crawl_images.py` lên 41 keyword đa dạng (Anh + Việt), đặt tên file `<class>/<slug>_<idx>.jpg` để thống kê.
+- [ ] Bước kế tiếp: chạy crawl thực + train.
 
 ## 5a. Workflow chuẩn (2 notebook)
 
 Toàn bộ dự án **CHỈ** dùng 2 notebook:
 
-1. **`notebook/01_prepare.ipynb`** — Chuẩn bị
+1. **`notebook/01_prepare.ipynb`** — Chuẩn bị (TỰ CRAWL theo đề bài)
    - Setup môi trường + cài deps
-   - Tải Freshness44 (`tools/prepare_freshness44.py --max-per-class 7500` → 15k ảnh)
-   - Sanity check: file lỗi, kích thước, đa dạng loại quả
-   - Tiền xử lý: resize 224×224, split 70/15/15
+   - Crawl 10k ảnh từ Google + Bing + Baidu (`crawler/crawl_images.py --target 10000`)
+   - Sanity check: file lỗi, kích thước, đa dạng keyword
+   - Tiền xử lý: resize 224×224, loại trùng (perceptual hash), split 70/15/15
    - Trực quan hoá: ảnh mẫu, phân bố class, augmentation demo
 
 2. **`notebook/02_train_and_evaluate.ipynb`** — Thực thi & kết quả

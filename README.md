@@ -96,18 +96,17 @@ python -c "import tensorflow as tf; print('GPU:', tf.config.list_physical_device
 
 ### 📓 Notebook 1 — `notebook/01_prepare.ipynb` (chuẩn bị dữ liệu)
 
-Notebook này thực hiện end-to-end khâu chuẩn bị:
+Notebook này thực hiện end-to-end khâu chuẩn bị, **TỰ CRAWL** ảnh từ web theo yêu cầu đề bài:
 1. Setup môi trường (kiểm tra TF, GPU)
 2. Cài dependencies
-3. **Tải Freshness44** từ Kaggle qua `kagglehub` (15.000 ảnh)
-4. Sắp xếp về `dataset/raw/{fresh,rotten}/`
-5. Sanity check: file lỗi, kích thước, đa dạng loại quả
-6. Tiền xử lý: resize 224×224, split 70/15/15
-7. Trực quan hoá: ảnh mẫu, phân bố class, augmentation demo
+3. **Crawl ảnh** từ Google + Bing + Baidu Images (41 keyword Anh + Việt)
+4. Sanity check: đếm ảnh theo keyword, kích thước, file lỗi
+5. Tiền xử lý: resize 224×224, loại trùng, split 70/15/15
+6. Trực quan hoá: ảnh mẫu, phân bố class, augmentation demo
 
 ```bash
 jupyter lab notebook/01_prepare.ipynb
-# → Run All Cells, mất ~30-45 phút lần đầu
+# Crawl 10k ảnh: ~30-60 phút lần đầu (tuỳ tốc độ mạng)
 ```
 
 ### 📓 Notebook 2 — `notebook/02_train_and_evaluate.ipynb` (thực thi & kết quả)

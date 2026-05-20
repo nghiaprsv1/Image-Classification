@@ -35,26 +35,60 @@ import imagehash
 # ----------------------------------------------------------------------------
 # Cấu hình keyword cho từng class
 # ----------------------------------------------------------------------------
+# Tăng đa dạng: nhiều loại quả + rau, dùng tiếng Anh + Việt + đồng nghĩa.
+# File sẽ được lưu thành '<class>/<keyword_slug>_<idx>.jpg' để sau dễ thống kê.
 KEYWORDS: Dict[str, List[str]] = {
     "fresh": [
-        "fresh vegetables",
-        "fresh cabbage",
+        # Trái cây
+        "fresh apple fruit",
+        "fresh banana",
+        "fresh orange fruit",
         "fresh tomato",
+        "fresh strawberry",
+        "fresh grape fruit",
+        "fresh mango",
+        "fresh pomegranate",
+        "fresh guava fruit",
+        "fresh papaya",
+        # Rau củ
+        "fresh vegetables on table",
+        "fresh cabbage",
         "fresh carrot",
         "fresh lettuce",
         "fresh broccoli",
         "fresh cucumber",
         "fresh bell pepper",
+        "fresh potato",
+        "fresh onion",
+        # Tiếng Việt → tăng tính đa dạng vùng miền
+        "rau cu tuoi",
+        "trai cay tuoi ngon",
     ],
     "rotten": [
+        # Trái cây hỏng
+        "rotten apple",
+        "rotten banana",
+        "rotten orange fruit",
+        "rotten tomato",
+        "rotten strawberry",
+        "moldy grape",
+        "rotten mango",
+        "rotten guava",
+        "rotten papaya",
+        # Rau hỏng
         "rotten vegetables",
         "rotten cabbage",
-        "rotten tomato",
         "rotten carrot",
-        "spoiled vegetables",
-        "moldy vegetables",
-        "decayed vegetables",
         "rotten lettuce",
+        "spoiled cucumber",
+        "moldy bell pepper",
+        "rotten potato",
+        "rotten onion",
+        "decayed vegetables",
+        "moldy fruit",
+        # Tiếng Việt
+        "rau cu hu thoi",
+        "trai cay hu mốc",
     ],
 }
 
@@ -71,9 +105,24 @@ HASH_SIZE = 8           # phash 8x8
 # ----------------------------------------------------------------------------
 # Crawl
 # ----------------------------------------------------------------------------
-def crawl_one(keyword: str, out_dir: Path, max_num: int, engines: List[str]) -> None:
-    """Crawl 1 keyword qua nhiều engine và lưu chung vào out_dir."""
-    out_dir.mkdir(parents=True, exist_ok=True)
+def _slug(keyword: str) -> str:
+    """Convert keyword thành slug an toàn cho tên file.
+    Ví dụ: 'fresh apple fruit' → 'fresh_apple_fruit'."""
+    import re
+    s = keyword.lower().strip()
+    s = re.sub(r"[^\w\s]", "", s, flags=re.UNICODE)  # bỏ ký tự đặc biệt
+    s = re.sub(r"\s+", "_", s)
+    return s or "kw"
+
+
+def crawl_one(keyword: str, class_dir: Path, max_num: int,
+              engines: List[str]) -> None:
+    """Crawl 1 keyword qua nhiều engine, lưu vào sub-folder tạm theo slug
+    rồi rename về `<class>/<slug>_<idx>.jpg` để biết ảnh thuộc keyword nào."""
+    class_dir.mkdir(parents=True, exist_ok=True)
+    slug = _slug(keyword)
+    tmp_dir = class_dir / f"_tmp_{slug}"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
     per_engine = max(1, max_num // len(engines))
 
     for engine_name in engines:
@@ -83,11 +132,11 @@ def crawl_one(keyword: str, out_dir: Path, max_num: int, engines: List[str]) -> 
             continue
         try:
             crawler = Crawler(
-                storage={"root_dir": str(out_dir)},
+                storage={"root_dir": str(tmp_dir)},
                 feeder_threads=1,
                 parser_threads=2,
                 downloader_threads=4,
-                log_level=40,  # ERROR — bớt log
+                log_level=40,
             )
             print(f"  └─ [{engine_name:6s}] '{keyword}' → {per_engine} ảnh")
             crawler.crawl(
@@ -98,6 +147,27 @@ def crawl_one(keyword: str, out_dir: Path, max_num: int, engines: List[str]) -> 
             )
         except Exception as exc:  # noqa: BLE001
             print(f"  [warn] {engine_name} fail trên '{keyword}': {exc}")
+
+    # Move tmp_dir/* → class_dir/<slug>_<idx>.<ext>, đánh số tránh trùng
+    moved = 0
+    existing = len(list(class_dir.glob(f"{slug}_*")))
+    for i, f in enumerate(sorted(tmp_dir.iterdir()), start=existing + 1):
+        if not f.is_file():
+            continue
+        ext = f.suffix.lower() or ".jpg"
+        target = class_dir / f"{slug}_{i:05d}{ext}"
+        try:
+            f.rename(target)
+            moved += 1
+        except OSError:
+            pass
+    # Xoá tmp_dir
+    try:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+    except OSError:
+        pass
+    if moved:
+        print(f"     → moved {moved} ảnh vào {class_dir.name}/{slug}_*")
 
 
 def crawl_class(class_name: str, keywords: List[str], out_root: Path,
