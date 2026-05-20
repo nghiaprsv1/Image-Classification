@@ -75,29 +75,78 @@ def download_via_kagglehub(cache_dir: Optional[Path] = None) -> Path:
 # ----------------------------------------------------------------------------
 # 2. Phân loại ảnh theo "fresh" / "rotten" dựa vào tên thư mục cha
 # ----------------------------------------------------------------------------
+import re
+
+# Keyword để nhận biết freshness — match WORD chứ không phải substring
+# (tránh "freshness44" bị match như "fresh")
+_RE_FRESH  = re.compile(r"(?:^|[_\-\s])(fresh|healthy|good)(?:[_\-\s]|$)", re.IGNORECASE)
+_RE_ROTTEN = re.compile(r"(?:^|[_\-\s])(rotten|stale|spoil(?:ed)?|bad|moldy|decay(?:ed)?)(?:[_\-\s]|$)",
+                        re.IGNORECASE)
+
+# Path components cần bỏ qua khi đoán type (cấu trúc dataset, không phải tên quả)
+_SKIP_TYPE = {"freshness44", "versions", "dataset", "datasets", "train", "test",
+              "valid", "validation", "images", "image", "data", "raw",
+              "fruits", "vegetables", "fresh", "rotten", "stale", "spoiled",
+              "spoilt", "moldy", "decayed", "healthy", "bad", "good",
+              "fresh_fruit", "rotten_fruit", "fresh_vegetables", "rotten_vegetables"}
+
+
 def classify_image(path: Path) -> Optional[str]:
-    """Trả về 'fresh' / 'rotten' / None dựa vào path."""
-    parts_lower = [p.lower() for p in path.parts]
-    has_fresh = any("fresh" in p for p in parts_lower)
-    has_rotten = any(("rotten" in p) or ("stale" in p) or ("spoil" in p)
-                     for p in parts_lower)
-    if has_rotten:           # ưu tiên rotten (ảnh có thể nằm trong "rotten_apple")
-        return "rotten"
-    if has_fresh:
-        return "fresh"
+    """Trả về 'fresh' / 'rotten' / None dựa vào path components."""
+    parts = list(path.parts)
+    # Ưu tiên rotten (ảnh có thể nằm trong vd 'rotten_apple/abc.jpg')
+    for part in parts:
+        if _RE_ROTTEN.search(part):
+            return "rotten"
+    for part in parts:
+        if _RE_FRESH.search(part):
+            return "fresh"
     return None
+
+
+def guess_type(path: Path) -> str:
+    """Đoán loại quả từ tên thư mục cha (apple, banana, …).
+
+    Bỏ qua các tên cấu trúc như 'versions', 'Freshness44', 'fresh', 'rotten' …
+    Tự strip prefix 'fresh_'/'rotten_' nếu có (vd 'rotten_apple' → 'apple').
+    """
+    for part in reversed(path.parent.parts):
+        p = part.lower().strip()
+        if not p or p in _SKIP_TYPE:
+            continue
+        # Strip prefix freshness nếu có: 'fresh_apple', 'rotten_banana_3'
+        for prefix in ("fresh_", "rotten_", "stale_", "spoiled_", "moldy_", "decayed_",
+                       "healthy_", "good_", "bad_"):
+            if p.startswith(prefix):
+                p = p[len(prefix):]
+                break
+        # Bỏ phần đuôi nếu có vd '_3', '_train'
+        p = re.sub(r"[_\-\s]+\d+$", "", p)
+        # Chỉ giữ chữ cái+số
+        clean = "".join(c for c in p if c.isalnum())
+        if clean and not clean.isdigit() and clean not in _SKIP_TYPE:
+            return clean
+    return "unknown"
 
 
 # ----------------------------------------------------------------------------
 # 3. Sắp xếp về dataset/raw/{fresh,rotten}/
 # ----------------------------------------------------------------------------
 def organise(src: Path, dst: Path, mode: str = "copy",
-             max_per_class: Optional[int] = None) -> dict:
+             max_per_class: Optional[int] = None,
+             overwrite: bool = False) -> dict:
     """
     Quét tất cả ảnh trong `src`, phân loại fresh/rotten, copy/symlink sang `dst`.
 
     mode: "copy" (an toàn, tốn dung lượng) | "symlink" (nhanh, tiết kiệm)
+    overwrite: True → xoá `dst/{fresh,rotten}/` cũ trước khi copy
     """
+    if overwrite:
+        for cls in ("fresh", "rotten"):
+            d = dst / cls
+            if d.exists():
+                print(f"[overwrite] xoá {d}")
+                shutil.rmtree(d)
     print(f"\n[2/3] Quét ảnh trong {src} …")
     all_files = [p for p in src.rglob("*") if p.suffix.lower() in VALID_EXTS]
     print(f"       Tìm thấy {len(all_files):,} ảnh")
@@ -156,19 +205,6 @@ def organise(src: Path, dst: Path, mode: str = "copy",
     return summary
 
 
-def guess_type(path: Path) -> str:
-    """Đoán loại quả từ tên thư mục cha (apple, banana, ...). Mặc định 'unknown'."""
-    for part in reversed(path.parent.parts):
-        p = part.lower()
-        if "fresh" in p or "rotten" in p or "stale" in p:
-            continue
-        # Lấy chữ cái + bỏ ký tự đặc biệt
-        clean = "".join(c for c in p if c.isalnum())
-        if clean and not clean.isdigit():
-            return clean
-    return "unknown"
-
-
 # ----------------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------------
@@ -185,13 +221,18 @@ def main() -> None:
                    help="copy (an toàn) | symlink (nhanh, ít dung lượng)")
     p.add_argument("--max-per-class", type=int, default=None,
                    help="Giới hạn số ảnh/class (vd 5000) để train nhanh")
+    p.add_argument("--overwrite", action="store_true",
+                   help="Xoá dataset/raw/{fresh,rotten}/ cũ trước khi copy lại "
+                        "(dùng khi đã chạy lần trước với code có bug)")
     args = p.parse_args()
 
     src = args.src or download_via_kagglehub(cache_dir=args.cache_dir)
     if not src.exists():
         sys.exit(f"[error] Không tìm thấy {src}")
 
-    summary = organise(src, args.dst, mode=args.mode, max_per_class=args.max_per_class)
+    summary = organise(src, args.dst, mode=args.mode,
+                       max_per_class=args.max_per_class,
+                       overwrite=args.overwrite)
 
     print("\n=== Tổng kết ===")
     for cls, n in summary.items():
