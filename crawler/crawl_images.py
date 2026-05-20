@@ -53,6 +53,24 @@ from tqdm import tqdm
 # icrawler có 3 backend:  Bing, Baidu — dùng song song để tăng đa dạng
 from icrawler.builtin import BaiduImageCrawler, BingImageCrawler, GoogleImageCrawler
 
+# DuckDuckGo crawler — wrapper nội bộ (không cần API key)
+DuckDuckGoImageCrawler = None  # noqa: N816 — sẽ check trước khi dùng
+for _import_path in (
+    "crawler.ddg_crawler",   # khi project/ có trong sys.path
+    "ddg_crawler",           # khi chạy `python crawler/crawl_images.py`
+    ".ddg_crawler",          # khi import như package
+):
+    try:
+        if _import_path.startswith("."):
+            from .ddg_crawler import DuckDuckGoImageCrawler  # type: ignore
+        else:
+            import importlib
+            _mod = importlib.import_module(_import_path)
+            DuckDuckGoImageCrawler = _mod.DuckDuckGoImageCrawler
+        break
+    except (ImportError, ModuleNotFoundError):
+        continue
+
 import imagehash
 
 # ----------------------------------------------------------------------------
@@ -130,6 +148,9 @@ ENGINE_MAP = {
     "bing": BingImageCrawler,
     "baidu": BaiduImageCrawler,
 }
+if DuckDuckGoImageCrawler is not None:
+    ENGINE_MAP["duckduckgo"] = DuckDuckGoImageCrawler
+    ENGINE_MAP["ddg"] = DuckDuckGoImageCrawler  # alias ngắn
 
 MIN_SIZE = 64           # ảnh nhỏ hơn 64px sẽ bị loại
 HASH_SIZE = 8           # phash 8x8
@@ -341,6 +362,9 @@ def main() -> None:
 
     _safe_print("\n=== Collecting stats ===")
     df = collect_stats(args.out)
+    if df.empty:
+        _safe_print("[warn] khong co anh nao de thong ke")
+        return
     print(df.groupby("class").size())
 
     plot_distribution(df, Path("results/data_distribution.png"))

@@ -24,6 +24,7 @@ selenium>=4.15
 beautifulsoup4>=4.12
 requests>=2.31
 tqdm>=4.66
+ddgs>=9.6              # DuckDuckGo image search (no API key)
 
 # ===== Kaggle datasets =====
 kagglehub>=0.3
