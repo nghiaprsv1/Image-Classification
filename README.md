@@ -92,62 +92,50 @@ python -c "import tensorflow as tf; print('GPU:', tf.config.list_physical_device
 
 ## 🚀 Hướng dẫn chạy từng bước
 
-### Bước 1 — Lấy dữ liệu
+> **Toàn bộ dự án gói gọn trong 2 notebook**. Mở `jupyter lab` (hoặc Jupyter Notebook), chạy lần lượt:
 
-**Cách A — Dùng dataset Freshness44 trên Kaggle (KHUYẾN NGHỊ)** ⭐
+### 📓 Notebook 1 — `notebook/01_prepare.ipynb` (chuẩn bị dữ liệu)
 
-Dataset đã được clean sẵn: 53.616 ảnh, 22 loại rau/quả, label fresh/rotten.
+Notebook này thực hiện end-to-end khâu chuẩn bị:
+1. Setup môi trường (kiểm tra TF, GPU)
+2. Cài dependencies
+3. **Tải Freshness44** từ Kaggle qua `kagglehub` (15.000 ảnh)
+4. Sắp xếp về `dataset/raw/{fresh,rotten}/`
+5. Sanity check: file lỗi, kích thước, đa dạng loại quả
+6. Tiền xử lý: resize 224×224, split 70/15/15
+7. Trực quan hoá: ảnh mẫu, phân bố class, augmentation demo
 
 ```bash
-pip install kagglehub
-python tools/prepare_freshness44.py
-# → tự tải về cache kagglehub rồi sắp xếp vào dataset/raw/{fresh,rotten}/
+jupyter lab notebook/01_prepare.ipynb
+# → Run All Cells, mất ~30-45 phút lần đầu
 ```
 
-Để train nhanh hơn (lấy mẫu):
+### 📓 Notebook 2 — `notebook/02_train_and_evaluate.ipynb` (thực thi & kết quả)
+
+Notebook này thực hiện huấn luyện và đánh giá đầy đủ:
+1. Load dataset đã chuẩn bị
+2. **Train MobileNetV2** (transfer learning, 2 pha freeze→fine-tune)
+3. **Train ResNet50** (cùng chiến lược)
+4. Đánh giá test set: accuracy, precision, recall, F1
+5. Sinh **7 nhóm biểu đồ phong phú**:
+   - Training curves (accuracy + loss)
+   - Confusion matrix (raw + normalized) cho 2 model
+   - Classification report heatmap
+   - ROC curve + AUC
+   - Bar chart so sánh metrics
+   - Lưới ảnh bị phân loại sai (phân tích lỗi)
+   - Demo predict trên 6 ảnh test
+6. Lưu tất cả output vào `results/*.png` để chèn báo cáo
+
 ```bash
-python tools/prepare_freshness44.py --max-per-class 5000
+jupyter lab notebook/02_train_and_evaluate.ipynb
+# → Run All Cells, mất ~1-3 giờ tuỳ phần cứng
 ```
 
-**Cách B — Tự crawl từ Google/Bing/Baidu (dự phòng)**
+### 💡 Yêu cầu
 
 ```bash
-python crawler/crawl_images.py --target 10000 --out dataset/raw
-```
-
-### Bước 2 — Tiền xử lý & split
-
-```bash
-python preprocessing/preprocess.py \
-    --src dataset/raw \
-    --dst dataset \
-    --img-size 224 \
-    --train 0.7 --valid 0.15 --test 0.15
-```
-
-### Bước 3 — Huấn luyện
-
-```bash
-# MobileNetV2 (nhẹ, nhanh)
-python models/train.py --model mobilenet --epochs 30 --batch-size 32
-
-# ResNet50 (mạnh hơn)
-python models/train.py --model resnet --epochs 30 --batch-size 32
-```
-
-### Bước 4 — Đánh giá
-
-```bash
-python evaluation/evaluate.py --model checkpoints/mobilenet_best.keras
-python evaluation/evaluate.py --model checkpoints/resnet_best.keras
-python evaluation/plots.py        # so sánh 2 model
-```
-
-### Bước 5 — Dự đoán ảnh mới
-
-```bash
-python app/predict.py --image path/to/image.jpg \
-                      --model checkpoints/mobilenet_best.keras
+pip install -r requirements.txt
 ```
 
 ## 📊 Kết quả mong đợi

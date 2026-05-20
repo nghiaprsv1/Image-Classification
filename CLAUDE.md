@@ -89,11 +89,32 @@ project/
 
 ## 5. Trạng thái hiện tại (cập nhật mỗi lần làm việc)
 
-- [x] **2026-05-18** — Khởi tạo cấu trúc dự án + bộ test pytest (37 tests pass).
-  - Đã tạo: crawler, preprocessing, models, evaluation, app, report outline, notebook.
-  - Đã tạo `tests/` + `pytest.ini` — 37/37 PASS trong ~23s (offline, weights=None).
-  - Chưa làm: chạy crawl thực tế, training thực tế trên dataset đầy đủ.
-- [ ] Bước kế tiếp: cài `pip install -r requirements.txt`, chạy `python crawler/crawl_images.py`
+- [x] **2026-05-18** — Khởi tạo cấu trúc + bộ test pytest (37 tests pass).
+- [x] **2026-05-19** — Switch dataset: Freshness44 (Kaggle, 53k ảnh) thay vì crawl.
+  - Script `tools/prepare_freshness44.py` với flag `--cache-dir`, `--max-per-class`.
+- [x] **2026-05-20** — Refactor notebooks: gộp về 2 file đầy đủ, dùng cho cả local lẫn Colab.
+  - `notebook/01_prepare.ipynb` — chuẩn bị dữ liệu (19 cells).
+  - `notebook/02_train_and_evaluate.ipynb` — train + evaluate + visualize (27 cells).
+  - Đã xoá `experiment.ipynb` và `colab_train.ipynb` cũ.
+- [ ] Bước kế tiếp: chạy 02_train_and_evaluate trên dataset 15k đã chuẩn bị.
+
+## 5a. Workflow chuẩn (2 notebook)
+
+Toàn bộ dự án **CHỈ** dùng 2 notebook:
+
+1. **`notebook/01_prepare.ipynb`** — Chuẩn bị
+   - Setup môi trường + cài deps
+   - Tải Freshness44 (`tools/prepare_freshness44.py --max-per-class 7500` → 15k ảnh)
+   - Sanity check: file lỗi, kích thước, đa dạng loại quả
+   - Tiền xử lý: resize 224×224, split 70/15/15
+   - Trực quan hoá: ảnh mẫu, phân bố class, augmentation demo
+
+2. **`notebook/02_train_and_evaluate.ipynb`** — Thực thi & kết quả
+   - Train MobileNetV2 (2-phase)
+   - Train ResNet50 (2-phase)
+   - Đánh giá test set: accuracy/precision/recall/F1
+   - 7 nhóm biểu đồ: training curves, confusion matrices, classification report heatmap, ROC curve, comparison bar chart, misclassified images, predict demo
+   - Sinh đầy đủ output `results/*.png` + `results/*_metrics.json` cho báo cáo
 
 ## 5b. Test (pytest)
 
