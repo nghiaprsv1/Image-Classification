@@ -108,23 +108,49 @@ def guess_type(path: Path) -> str:
     """Đoán loại quả từ tên thư mục cha (apple, banana, …).
 
     Bỏ qua các tên cấu trúc như 'versions', 'Freshness44', 'fresh', 'rotten' …
-    Tự strip prefix 'fresh_'/'rotten_' nếu có (vd 'rotten_apple' → 'apple').
+    Strip prefix/suffix freshness ('fresh_apple' → 'apple', 'apple_fresh' → 'apple').
     """
+    # Các từ về freshness (cần strip ra khỏi tên folder)
+    fresh_words = ("fresh", "rotten", "stale", "spoiled", "spoilt",
+                   "moldy", "decayed", "healthy", "good", "bad")
+
     for part in reversed(path.parent.parts):
         p = part.lower().strip()
         if not p or p in _SKIP_TYPE:
             continue
-        # Strip prefix freshness nếu có: 'fresh_apple', 'rotten_banana_3'
-        for prefix in ("fresh_", "rotten_", "stale_", "spoiled_", "moldy_", "decayed_",
-                       "healthy_", "good_", "bad_"):
-            if p.startswith(prefix):
-                p = p[len(prefix):]
-                break
-        # Bỏ phần đuôi nếu có vd '_3', '_train'
+
+        # Strip prefix/suffix có dấu phân tách: 'fresh_apple', 'apple_fresh', 'rotten-banana'
+        for w in fresh_words:
+            for sep in ("_", "-", " "):
+                if p.startswith(w + sep):
+                    p = p[len(w) + 1:]
+                    break
+                if p.endswith(sep + w):
+                    p = p[:-(len(w) + 1)]
+                    break
+
+        # Strip trailing index: 'banana_3', 'apple-12'
         p = re.sub(r"[_\-\s]+\d+$", "", p)
-        # Chỉ giữ chữ cái+số
+
+        # Loại bỏ ký tự đặc biệt
         clean = "".join(c for c in p if c.isalnum())
-        if clean and not clean.isdigit() and clean not in _SKIP_TYPE:
+        if not clean or clean.isdigit() or clean in _SKIP_TYPE:
+            continue
+
+        # Strip prefix/suffix freshness DÍNH LIỀN: 'applefresh', 'rottenapple'
+        for w in fresh_words:
+            if clean.startswith(w) and len(clean) > len(w):
+                rest = clean[len(w):]
+                if rest not in _SKIP_TYPE:
+                    clean = rest
+                    break
+            if clean.endswith(w) and len(clean) > len(w):
+                rest = clean[:-len(w)]
+                if rest not in _SKIP_TYPE:
+                    clean = rest
+                    break
+
+        if clean and clean not in _SKIP_TYPE:
             return clean
     return "unknown"
 
