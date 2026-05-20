@@ -25,6 +25,9 @@ beautifulsoup4>=4.12
 requests>=2.31
 tqdm>=4.66
 
+# ===== Kaggle datasets =====
+kagglehub>=0.3
+
 # ===== Image hashing (dedup) =====
 imagehash>=4.3
 

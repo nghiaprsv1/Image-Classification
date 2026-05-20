@@ -52,7 +52,9 @@ project/
 
 ## 3. Pipeline tổng thể (luồng chuẩn)
 
-1. **Crawl** → `crawler/crawl_images.py` → lưu vào `dataset/raw/{fresh,rotten}/`
+1. **Lấy dữ liệu** — chọn 1 trong 2:
+   - **Khuyến nghị**: `python tools/prepare_freshness44.py` → tải Freshness44 (Kaggle, 53.6k ảnh, đã clean) và sắp xếp vào `dataset/raw/{fresh,rotten}/`
+   - Dự phòng: `python crawler/crawl_images.py` → tự crawl từ Google/Bing/Baidu
 2. **Clean & split** → `preprocessing/preprocess.py` → tạo `dataset/{train,valid,test}/`
    - Tỉ lệ: 70% / 15% / 15%
    - Resize ảnh về **224x224**, normalize [0,1]
@@ -65,6 +67,14 @@ project/
 5. **Evaluate** → `evaluation/evaluate.py --model <path>`
 6. **Compare** → `evaluation/plots.py` so sánh MobileNetV2 vs ResNet50
 7. **Predict** → `app/predict.py --image <path> --model <path>`
+
+## 3b. Dataset Freshness44 (chính chủ)
+
+- **Nguồn**: https://www.kaggle.com/datasets/siavash93/freshness44
+- **Quy mô**: 53.616 ảnh, 22 loại rau/quả, ~6.7 GB
+- **Đã có**: dedup MD5, chuẩn JPEG, label fresh/rotten đã được clean
+- **Tổng hợp từ**: Fresh and Stale Fruits and Vegetables, Fruits and Vegetables Dataset, Fresh and Rotten Fruits Dataset, FruitNet, FruitQ
+- **Script**: `tools/prepare_freshness44.py` — tải qua `kagglehub` rồi tự phân loại fresh/rotten dựa vào path
 
 ## 4. Quy ước
 

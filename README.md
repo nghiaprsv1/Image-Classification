@@ -92,7 +92,24 @@ python -c "import tensorflow as tf; print('GPU:', tf.config.list_physical_device
 
 ## 🚀 Hướng dẫn chạy từng bước
 
-### Bước 1 — Crawl dữ liệu
+### Bước 1 — Lấy dữ liệu
+
+**Cách A — Dùng dataset Freshness44 trên Kaggle (KHUYẾN NGHỊ)** ⭐
+
+Dataset đã được clean sẵn: 53.616 ảnh, 22 loại rau/quả, label fresh/rotten.
+
+```bash
+pip install kagglehub
+python tools/prepare_freshness44.py
+# → tự tải về cache kagglehub rồi sắp xếp vào dataset/raw/{fresh,rotten}/
+```
+
+Để train nhanh hơn (lấy mẫu):
+```bash
+python tools/prepare_freshness44.py --max-per-class 5000
+```
+
+**Cách B — Tự crawl từ Google/Bing/Baidu (dự phòng)**
 
 ```bash
 python crawler/crawl_images.py --target 10000 --out dataset/raw
