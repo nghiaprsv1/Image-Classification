@@ -78,56 +78,50 @@ for name in ("icrawler", "icrawler.parser", "icrawler.downloader",
 # File sẽ được lưu thành '<class>/<keyword_slug>_<idx>.jpg' để sau dễ thống kê.
 KEYWORDS: Dict[str, List[str]] = {
     "fresh": [
-        # Trái cây
-        "fresh apple fruit",
-        "fresh banana",
-        "fresh orange fruit",
-        "fresh tomato",
-        "fresh strawberry",
-        "fresh grape fruit",
-        "fresh mango",
-        "fresh pomegranate",
-        "fresh guava fruit",
-        "fresh papaya",
+        # Trái cây cơ bản
+        "fresh apple fruit", "fresh banana ripe", "fresh orange fruit",
+        "fresh tomato", "fresh strawberry", "fresh grape fruit",
+        "fresh mango", "fresh pomegranate", "fresh guava fruit",
+        "fresh papaya", "fresh pear fruit", "fresh peach fruit",
+        "fresh watermelon slice", "fresh pineapple", "fresh kiwi fruit",
+        "fresh lemon fruit", "fresh lime fruit", "fresh dragon fruit",
+        "fresh avocado", "fresh blueberry",
         # Rau củ
-        "fresh vegetables on table",
-        "fresh cabbage",
-        "fresh carrot",
-        "fresh lettuce",
-        "fresh broccoli",
-        "fresh cucumber",
-        "fresh bell pepper",
-        "fresh potato",
-        "fresh onion",
-        # Tiếng Việt → tăng tính đa dạng vùng miền
-        "rau cu tuoi",
-        "trai cay tuoi ngon",
+        "fresh vegetables on table", "fresh cabbage head",
+        "fresh carrot", "fresh lettuce green", "fresh broccoli",
+        "fresh cucumber", "fresh bell pepper", "fresh potato",
+        "fresh onion", "fresh spinach leaves", "fresh celery",
+        "fresh eggplant", "fresh zucchini", "fresh corn cob",
+        "fresh garlic bulb", "fresh ginger root", "fresh chili pepper",
+        "fresh radish", "fresh sweet potato", "fresh pumpkin",
+        # Tiếng Việt
+        "rau cu tuoi", "trai cay tuoi ngon", "rau xanh sach",
+        "qua tuoi cho", "ca chua tuoi", "tao tuoi do",
     ],
     "rotten": [
-        # Trái cây hỏng
-        "rotten apple",
-        "rotten banana",
-        "rotten orange fruit",
-        "rotten tomato",
-        "rotten strawberry",
-        "moldy grape",
-        "rotten mango",
-        "rotten guava",
-        "rotten papaya",
+        # Trái cây hỏng — TĂNG MẠNH (đang thiếu)
+        "rotten apple decayed", "rotten banana brown", "rotten orange mold",
+        "rotten tomato spoiled", "rotten strawberry mold",
+        "moldy grape decayed", "rotten mango spoiled",
+        "rotten guava decayed", "rotten papaya black",
+        "rotten pear", "rotten peach mold", "rotten watermelon",
+        "moldy lemon", "decaying fruit close up", "spoiled fruit garbage",
+        "fruit fungus growing", "rotten avocado brown",
+        "moldy berries", "rotten pineapple",
         # Rau hỏng
-        "rotten vegetables",
-        "rotten cabbage",
-        "rotten carrot",
-        "rotten lettuce",
-        "spoiled cucumber",
-        "moldy bell pepper",
-        "rotten potato",
-        "rotten onion",
-        "decayed vegetables",
-        "moldy fruit",
+        "rotten vegetables", "rotten cabbage decayed",
+        "rotten carrot mold", "rotten lettuce wilted",
+        "spoiled cucumber slimy", "moldy bell pepper",
+        "rotten potato mold", "rotten onion decayed",
+        "rotten spinach wilted", "rotten broccoli yellow",
+        "moldy garlic", "decayed vegetables compost",
+        "moldy fruit fungus", "rotten eggplant",
+        "spoiled tomato squished", "wilted lettuce",
+        "decomposing vegetables", "old vegetables fridge",
         # Tiếng Việt
-        "rau cu hu thoi",
-        "trai cay hu mốc",
+        "rau cu hu thoi", "trai cay hu moc", "qua hong thoi",
+        "rau hong moc meo", "trai cay thoi rua",
+        "thuc pham hu thoi",
     ],
 }
 
@@ -212,12 +206,23 @@ def crawl_one(keyword: str, class_dir: Path, max_num: int,
 
 def crawl_class(class_name: str, keywords: List[str], out_root: Path,
                 target_per_class: int, engines: List[str]) -> Path:
-    """Crawl toàn bộ keyword cho 1 class."""
+    """Crawl toàn bộ keyword cho 1 class. Early-stop khi đạt target."""
     class_dir = out_root / class_name
     class_dir.mkdir(parents=True, exist_ok=True)
     per_keyword = max(50, target_per_class // len(keywords))
-    _safe_print(f"\n[crawl] class={class_name} | target={target_per_class} | per-kw={per_keyword}")
+    current = sum(1 for f in class_dir.iterdir() if f.is_file())
+    _safe_print(f"\n[crawl] class={class_name} | target={target_per_class} | "
+                f"per-kw={per_keyword} | hien co={current}")
+    if current >= target_per_class:
+        _safe_print(f"  [skip] {class_name} da co {current} >= {target_per_class}")
+        return class_dir
+
     for kw in keywords:
+        # Early-stop
+        current = sum(1 for f in class_dir.iterdir() if f.is_file())
+        if current >= target_per_class:
+            _safe_print(f"  [done-early] {class_name} dat {current}/{target_per_class}")
+            break
         crawl_one(kw, class_dir, per_keyword, engines)
     return class_dir
 
@@ -309,31 +314,38 @@ def main() -> None:
     p.add_argument("--out", type=Path, default=Path("dataset/raw"))
     p.add_argument("--engines", type=str, default="bing,baidu",
                    help="Comma-separated: bing,baidu")
+    p.add_argument("--class", dest="cls", choices=["fresh", "rotten", "both"],
+                   default="both",
+                   help="Chỉ crawl 1 class (fresh|rotten) hoặc cả 2 (both)")
+    p.add_argument("--per-class", type=int, default=None,
+                   help="Số ảnh muốn có cho mỗi class (override --target)")
     p.add_argument("--skip-crawl", action="store_true",
                    help="Bỏ qua crawl, chỉ clean & thống kê")
     args = p.parse_args()
 
     engines = [e.strip() for e in args.engines.split(",") if e.strip()]
-    target_per_class = args.target // 2
+    target_per_class = args.per_class if args.per_class else args.target // 2
+
+    classes_to_crawl = ["fresh", "rotten"] if args.cls == "both" else [args.cls]
 
     if not args.skip_crawl:
-        for cls, kws in KEYWORDS.items():
-            crawl_class(cls, kws, args.out, target_per_class, engines)
+        for cls in classes_to_crawl:
+            crawl_class(cls, KEYWORDS[cls], args.out, target_per_class, engines)
 
-    print("\n=== Cleaning ===")
+    _safe_print("\n=== Cleaning ===")
     summary = defaultdict(dict)
-    for cls in KEYWORDS:
+    for cls in classes_to_crawl:
         summary[cls] = clean_directory(args.out / cls)
-    print("\n=== Clean summary ===")
+    _safe_print("\n=== Clean summary ===")
     print(pd.DataFrame(summary).T)
 
-    print("\n=== Collecting stats ===")
+    _safe_print("\n=== Collecting stats ===")
     df = collect_stats(args.out)
     print(df.groupby("class").size())
 
     plot_distribution(df, Path("results/data_distribution.png"))
     df.to_csv("results/data_inventory.csv", index=False)
-    print("[done] crawl + clean + stats")
+    _safe_print("[done] crawl + clean + stats")
 
 
 if __name__ == "__main__":
