@@ -11,9 +11,37 @@
 - **Loại bài toán**: Image Classification (Binary) — `fresh` vs `rotten`
 - **Ngôn ngữ**: Python 3.9 – 3.11
 - **Framework chính**: TensorFlow / Keras 2.15+
-- **Mục tiêu**: Accuracy ≥ 90% trên test set
 - **Phần cứng**: Tối ưu cho laptop GPU yếu (4–6GB VRAM, hoặc CPU)
 - **Phong cách code**: Clean architecture, production-ready, có comment đầy đủ
+
+### Yêu cầu đề bài (BẮT BUỘC)
+
+1. **Thu thập dữ liệu (Phần 1)**:
+   - **TỰ crawl** (KHÔNG dùng nguyên dataset có sẵn).
+   - Số lượng **> 10.000 mẫu**, dẫn nguồn + mô tả cách thu thập.
+   - Có thống kê mô tả trực quan.
+2. **Trích xuất đặc trưng (Phần 2)**:
+   - Lựa chọn đặc trưng + làm sạch + chuẩn hoá + (giảm chiều).
+   - Trực quan hoá kết quả từng bước.
+3. **Mô hình hoá (Phần 3)**:
+   - Chọn **≥ 2 model**.
+   - Split Train/Validation/Test theo tỉ lệ phù hợp.
+   - Có đồ thị thể hiện hiệu quả train/val/test.
+   - **Accuracy ≥ 85%**.
+4. **Báo cáo**:
+   - **≥ 35 trang** (KHÔNG tính phụ lục + TLTK).
+5. **Không trùng** đề tài PBL5.
+
+### Lộ trình chuẩn (6 giai đoạn)
+
+| GĐ | Nội dung | Output chính |
+|---|---|---|
+| 1 | Thu thập dữ liệu (tự crawl + topup Kaggle để đạt 7k/class) | `dataset/raw/`, `report/data_sources.md` |
+| 2 | Feature engineering + EDA + visualization từng bước | `dataset/processed/`, `results/eda_*.png`, `results/tsne_2d.png` |
+| 3 | Train ≥ 2 model (MobileNetV2 + ResNet50 + custom CNN), accuracy ≥ 85% | `checkpoints/*.keras`, `results/*_metrics.json` |
+| 4 | Visualize kết quả: training curves, CM, ROC, Grad-CAM | `results/*.png` |
+| 5 | Viết báo cáo ≥ 35 trang | `report/report.docx` hoặc `.pdf` |
+| 6 | Polish + reproducibility + submit | — |
 
 ## 2. Cấu trúc dự án
 
