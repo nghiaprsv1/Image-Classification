@@ -1,30 +1,65 @@
-# Datasets
-dataset/raw/
-dataset/processed/
-dataset/train/
-dataset/valid/
-dataset/test/
+# ============ Datasets (KHÔNG commit ảnh - quá nặng) ============
+dataset/
+dataset_raw.zip
 *.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
 
-# Outputs
+# ============ Model artifacts ============
 checkpoints/
 logs/
-results/
 *.h5
 *.keras
 *.tflite
+*.pb
+*.onnx
 
-# Python
+# ============ Outputs / results lớn ============
+results/*.png
+results/*.jpg
+results/*.csv
+results/*.json
+notebook_result_colab/
+
+# ============ Logs ============
+*.log
+crawl_multi.log
+
+# ============ Helper scripts cá nhân ============
+_analyze_fruits.py
+_count_classes.py
+_remove_kaggle.py
+
+# ============ Python ============
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 .venv/
 venv/
 env/
-.ipynb_checkpoints/
+ENV/
 
-# IDE / OS
+# ============ Jupyter ============
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# ============ IDE / OS ============
 .vscode/
 .idea/
+*.swp
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ============ Secrets ============
+.env
+.env.local
+*.pem
+*.key

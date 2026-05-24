@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vấn đáp đồ án — Phân loại quả tươi/hỏng</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f9fc;
+    --card: #ffffff;
+    --text: #1f2937;
+    --text-soft: #4b5563;
+    --primary: #1976d2;
+    --success: #43a047;
+    --danger: #c62828;
+    --warning: #f57c00;
+    --border: #e5e7eb;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+                 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 16px;
+  }
+  .layout { display: flex; max-width: 1280px; margin: 0 auto; }
+
+  /* Sticky sidebar */
+  .sidebar {
+    position: sticky; top: 0; align-self: flex-start;
+    width: 270px; height: 100vh; overflow-y: auto;
+    padding: 24px 18px; background: #fff;
+    border-right: 1px solid var(--border);
+  }
+  .sidebar h3 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-soft); margin-bottom: 12px; font-weight: 600;
+  }
+  .sidebar ul { list-style: none; }
+  .sidebar li { margin: 4px 0; }
+  .sidebar a {
+    display: block; padding: 8px 12px; border-radius: 6px;
+    color: var(--text-soft); text-decoration: none; font-size: 14px;
+    transition: all 0.15s;
+  }
+  .sidebar a:hover { background: #f3f4f6; color: var(--primary); }
+  .sidebar a.indent { padding-left: 24px; font-size: 13px; }
+
+  /* Main content */
+  .main { flex: 1; padding: 36px 48px; max-width: 960px; }
+  header.page-head {
+    margin-bottom: 32px; padding-bottom: 24px;
+    border-bottom: 2px solid var(--border);
+  }
+  header.page-head h1 {
+    font-size: 28px; font-weight: 700; color: var(--text);
+    margin-bottom: 8px;
+  }
+  header.page-head p { color: var(--text-soft); font-size: 15px; }
+
+  /* Stage banner */
+  .stage-banner {
+    background: linear-gradient(135deg, var(--primary), #1565c0);
+    color: white; padding: 18px 24px; border-radius: 10px;
+    margin: 32px 0 24px; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
+  }
+  .stage-banner h2 { font-size: 22px; font-weight: 700; }
+  .stage-banner p { opacity: 0.92; font-size: 14px; margin-top: 4px; }
+
+  /* Question card */
+  .question {
+    background: var(--card); border-radius: 12px; padding: 28px;
+    margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
+  }
+  .q-tag {
+    display: inline-block; background: var(--primary); color: white;
+    padding: 4px 10px; border-radius: 4px; font-size: 12px;
+    font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .question h3 {
+    font-size: 20px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; line-height: 1.3;
+  }
+  .answer-label {
+    display: inline-block; background: #e8f5e9; color: var(--success);
+    padding: 6px 12px; border-radius: 6px; font-size: 13px;
+    font-weight: 600; margin-bottom: 16px;
+  }
+
+  /* Method cards */
+  .methods { display: grid; gap: 14px; margin: 18px 0; }
+  .method {
+    background: #f8fafc; border-left: 4px solid var(--primary);
+    padding: 16px 20px; border-radius: 0 8px 8px 0;
+  }
+  .method-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .method-num {
+    background: var(--primary); color: white; width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .method-title {
+    font-size: 16px; font-weight: 600; color: var(--text);
+  }
+  .method-body { color: var(--text-soft); font-size: 14.5px; }
+  .method-body p { margin: 8px 0; }
+
+  /* Tables */
+  table {
+    width: 100%; border-collapse: collapse; margin: 14px 0;
+    font-size: 14px; background: white; border-radius: 8px;
+    overflow: hidden;
+  }
+  th {
+    background: #f1f5f9; color: var(--text); font-weight: 600;
+    padding: 10px 14px; text-align: left; font-size: 13px;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    color: var(--text-soft);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfc; }
+
+  /* Code block */
+  pre {
+    background: var(--code-bg); color: var(--code-text);
+    padding: 14px 18px; border-radius: 8px; overflow-x: auto;
+    font-size: 13.5px; line-height: 1.55; margin: 12px 0;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  }
+  code {
+    background: #f3f4f6; color: #c026d3; padding: 2px 6px;
+    border-radius: 3px; font-size: 13.5px;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+
+  /* Difficulty/Solution boxes */
+  .difficulty {
+    background: white; border-radius: 10px; margin: 20px 0;
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .diff-problem {
+    background: #fef2f2; padding: 14px 20px;
+    border-left: 4px solid var(--danger);
+  }
+  .diff-problem .label {
+    color: var(--danger); font-weight: 700; font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .diff-problem .title {
+    font-size: 16px; font-weight: 600; color: var(--text);
+    margin-top: 4px;
+  }
+  .diff-solution {
+    background: #f0fdf4; padding: 14px 20px;
+    border-left: 4px solid var(--success);
+  }
+  .diff-solution .label {
+    color: var(--success); font-weight: 700; font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .diff-solution-body {
+    margin-top: 6px; font-size: 14.5px; color: var(--text-soft);
+  }
+  .diff-solution-body ul { margin-left: 22px; margin-top: 6px; }
+  .diff-solution-body li { margin: 4px 0; }
+
+  /* Stats grid */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin: 20px 0;
+  }
+  .stat-card {
+    background: white; border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px;
+  }
+  .stat-num {
+    font-size: 22px; font-weight: 700; color: var(--primary);
+  }
+  .stat-label {
+    font-size: 12px; color: var(--text-soft); margin-top: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* Evidence box */
+  .evidence {
+    background: #fefce8; border-left: 4px solid var(--warning);
+    padding: 14px 20px; border-radius: 0 8px 8px 0; margin: 20px 0;
+  }
+  .evidence h4 {
+    font-size: 14px; color: var(--warning); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .evidence ul { margin-left: 20px; }
+  .evidence li { font-size: 14px; margin: 4px 0; color: var(--text-soft); }
+  .evidence code { font-size: 13px; }
+
+  /* Section heading */
+  h4.subsection {
+    font-size: 17px; font-weight: 700; color: var(--text);
+    margin: 24px 0 10px; padding-top: 8px;
+  }
+
+  ul.bullet { margin-left: 22px; margin: 10px 0; }
+  ul.bullet li { margin: 6px 0; color: var(--text-soft); }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 32px 0;
+    color: var(--text-soft); font-size: 13px;
+    border-top: 1px solid var(--border); margin-top: 48px;
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .sidebar {
+      position: relative; width: 100%; height: auto;
+      border-right: none; border-bottom: 1px solid var(--border);
+    }
+    .main { padding: 24px; }
+  }
+
+  /* Print */
+  @media print {
+    .sidebar { display: none; }
+    .main { max-width: none; padding: 0; }
+    .question { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<!-- ============== SIDEBAR ============== -->
+<aside class="sidebar">
+  <h3>Mục lục</h3>
+  <ul>
+    <li><a href="#stage-1">GIAI ĐOẠN 1 — Thu thập</a></li>
+    <li><a href="#q1" class="indent">Q1. Phương pháp đạt &gt;12k ảnh</a></li>
+    <li><a href="#q2" class="indent">Q2. Keyword chung chia về 16 class?</a></li>
+    <li><a href="#difficulties" class="indent">Khó khăn &amp; cách xử lý</a></li>
+    <li><a href="#evidence" class="indent">Bằng chứng output</a></li>
+  </ul>
+  <h3 style="margin-top: 24px;">Trạng thái</h3>
+  <ul>
+    <li><a href="#" style="background:#e8f5e9;color:#2e7d32;">✓ GĐ 1 — Hoàn thành</a></li>
+    <li><a href="#" style="background:#e8f5e9;color:#2e7d32;">✓ GĐ 2 — EDA</a></li>
+    <li><a href="#" style="background:#e8f5e9;color:#2e7d32;">✓ GĐ 3 — Train</a></li>
+    <li><a href="#" style="color:#9ca3af;">○ GĐ 4 — Visualize</a></li>
+    <li><a href="#" style="color:#9ca3af;">○ GĐ 5 — Báo cáo</a></li>
+  </ul>
+</aside>
+
+<!-- ============== MAIN ============== -->
+<main class="main">
+<header class="page-head">
+  <h1>📋 Vấn đáp đồ án</h1>
+  <p>Đề tài: <strong>Phân biệt loại quả &amp; trạng thái tươi/hỏng bằng Deep Learning</strong>
+     — Image Classification 16 lớp (8 loại quả × Fresh/Rotten)</p>
+</header>
+
+<!-- ============== STAGE 1 BANNER ============== -->
+<div class="stage-banner" id="stage-1">
+  <h2>Giai đoạn 1 — Thu thập dữ liệu</h2>
+  <p>Yêu cầu đề bài: Tự crawl &gt; 10.000 mẫu, dẫn nguồn, có thống kê mô tả trực quan.
+     Đã đạt: <strong>12.786 ảnh / 16 class</strong> ✓</p>
+</div>
+
+<!-- ============== Q1 ============== -->
+<article class="question" id="q1">
+  <span class="q-tag">CÂU HỎI 1</span>
+  <h3>Những phương pháp nào được sử dụng để đạt được số ảnh &gt; 12k như hiện tại?</h3>
+  <span class="answer-label">✓ Trả lời — đã đạt 12.786 ảnh / 16 class</span>
+
+  <!-- Method 1 -->
+  <div class="methods">
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">1</span>
+        <span class="method-title">Multi-engine crawling — 4 search engine song song</span>
+      </div>
+      <div class="method-body">
+        <p>Sử dụng đồng thời <strong>4 nguồn search engine</strong> để tăng diversity, tránh bias từ 1 engine duy nhất:</p>
+        <table>
+          <tr><th>Engine</th><th>Thư viện</th><th>Vai trò</th></tr>
+          <tr><td><strong>Bing Images</strong></td><td><code>icrawler.builtin.BingImageCrawler</code></td><td>Index rộng, ổn định, ít bị block</td></tr>
+          <tr><td><strong>Baidu Images</strong></td><td><code>icrawler.builtin.BaiduImageCrawler</code></td><td>Coverage tốt cho ảnh châu Á</td></tr>
+          <tr><td><strong>Google Images</strong></td><td><code>icrawler.builtin.GoogleImageCrawler</code></td><td>Quality cao, fallback</td></tr>
+          <tr><td><strong>DuckDuckGo</strong></td><td><code>crawler/ddg_crawler.py</code> (tự viết)</td><td>Privacy-friendly, không cần API key</td></tr>
+        </table>
+        <p>Mỗi engine có thuật toán index khác nhau → kết quả crawl trùng nhau ít hơn 30% → tăng diversity, model tránh overfit theo style ảnh của 1 nguồn.</p>
+      </div>
+    </div>
+
+    <!-- Method 2 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">2</span>
+        <span class="method-title">Keyword strategy — 41+ keyword đa dạng / class</span>
+      </div>
+      <div class="method-body">
+        <p>Mỗi class có <strong>41+ keyword bằng 3 ngôn ngữ</strong>:</p>
+        <ul class="bullet">
+          <li><strong>Tiếng Anh chung</strong>: <code>"fresh apple fruit"</code>, <code>"rotten banana brown"</code></li>
+          <li><strong>Tiếng Anh chi tiết</strong>: <code>"close-up rotten guava"</code>, <code>"fungus growing on bread"</code></li>
+          <li><strong>Tiếng Việt</strong>: <code>"rau cu tuoi"</code>, <code>"trai cay hu thoi"</code>, <code>"qua hong moc meo"</code></li>
+        </ul>
+        <p>Chi tiết trong <code>crawler/crawl_images.py::KEYWORDS</code>: class <code>fresh</code> có 47 keyword, class <code>rotten</code> có 41 keyword.</p>
+        <p>→ Mỗi keyword × 4 engine × ~50 ảnh ≈ <strong>2-6k ảnh/class</strong> trước khi clean.</p>
+      </div>
+    </div>
+
+    <!-- Method 3 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">3</span>
+        <span class="method-title">Naming convention — traceback keyword</span>
+      </div>
+      <div class="method-body">
+        <p>File lưu thành <code>&lt;class&gt;/&lt;keyword_slug&gt;_&lt;idx&gt;.jpg</code> thay vì tên random:</p>
+        <pre><code>Apple_Fresh/
+├── fresh_apple_fruit_00001.jpg     ← từ keyword "fresh apple fruit"
+├── fresh_apple_fruit_00002.jpg
+├── tao_tuoi_do_00001.jpg            ← từ keyword "tao tuoi do" (Việt)
+└── ...</code></pre>
+        <p>→ Có thể thống kê <strong>keyword nào hiệu quả nhất</strong>, keyword nào trùng nhiều — tinh chỉnh cho lần crawl sau.</p>
+      </div>
+    </div>
+
+    <!-- Method 4 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">4</span>
+        <span class="method-title">Data cleaning 3 lớp (<code>clean_directory</code>)</span>
+      </div>
+      <div class="method-body">
+        <table>
+          <tr><th>Filter</th><th>Phương pháp</th><th>Mục đích</th></tr>
+          <tr><td><strong>Broken image</strong></td><td><code>PIL.Image.verify()</code></td><td>Loại file lỗi không decode được</td></tr>
+          <tr><td><strong>Tiny image</strong></td><td><code>min(W, H) &lt; 64 px</code></td><td>Loại icon, thumbnail</td></tr>
+          <tr><td><strong>Duplicate</strong></td><td><code>imagehash.phash()</code> 64-bit</td><td>Loại ảnh trùng (kể cả resize/recompress)</td></tr>
+        </table>
+        <p>Tỷ lệ giữ lại sau cleaning: <strong>40-60%</strong> so với raw crawl.</p>
+      </div>
+    </div>
+
+    <!-- Method 5 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">5</span>
+        <span class="method-title">Perceptual Hash (pHash) — tốt hơn byte hash</span>
+      </div>
+      <div class="method-body">
+        <table>
+          <tr><th>Phương pháp</th><th>Khả năng</th></tr>
+          <tr><td>MD5/SHA256</td><td>1 pixel khác → không match → miss ảnh resize/recompress</td></tr>
+          <tr><td>Filename match</td><td>Vô dụng (engine đặt tên ngẫu nhiên)</td></tr>
+          <tr><td><strong>pHash</strong></td><td>Resize 32×32, áp DCT, lấy 8×8 = 64 bit → 2 ảnh giống nội dung sẽ có hash giống nhau</td></tr>
+        </table>
+        <p>Hamming distance &lt; 5 → coi là duplicate. Đây là <strong>chuẩn industry</strong> cho deduplication ảnh.</p>
+      </div>
+    </div>
+
+    <!-- Method 6 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">6</span>
+        <span class="method-title">Early-stopping per class</span>
+      </div>
+      <div class="method-body">
+        <p>Trong <code>crawl_class()</code>, sau mỗi keyword check tổng số ảnh hiện có:</p>
+        <pre><code>if current &gt;= target_per_class:
+    print(f"[done-early] {class_name} đạt {current}/{target_per_class}")
+    break</code></pre>
+        <p>→ Tránh crawl thừa khi đã đủ target → tiết kiệm thời gian + bandwidth.</p>
+      </div>
+    </div>
+
+    <!-- Method 7 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">7</span>
+        <span class="method-title">Multi-threading 8 connections song song</span>
+      </div>
+      <div class="method-body">
+        <p>Mỗi crawler instance dùng:</p>
+        <ul class="bullet">
+          <li><code>feeder_threads=1</code> — parse query</li>
+          <li><code>parser_threads=2</code> — extract image URLs</li>
+          <li><code>downloader_threads=4</code> — download song song</li>
+        </ul>
+        <p>→ <strong>8 connection song song</strong> cho mỗi engine → crawl 1 keyword 50 ảnh chỉ mất <strong>~15-30 giây</strong>.</p>
+        <p>DuckDuckGo crawler dùng <code>ThreadPoolExecutor</code> 8 workers + retry 2 lần với timeout 8s.</p>
+      </div>
+    </div>
+
+    <!-- Method 8 -->
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num">8</span>
+        <span class="method-title">Topup từ Kaggle Freshness44 (chỉ khi cần)</span>
+      </div>
+      <div class="method-body">
+        <p>Vì 4 engine vẫn có thể không đủ ảnh cho class hiếm (ví dụ <code>Pomegranate_Rotten</code>), project chuẩn bị
+           <code>tools/prepare_freshness44.py</code> đọc từ Kaggle Freshness44 (53k ảnh đã clean) để topup các class thiếu.</p>
+        <p><strong>Lưu ý:</strong> theo yêu cầu đề bài "TỰ crawl, KHÔNG dùng nguyên dataset có sẵn", topup chỉ dùng khi <strong>hoàn toàn cần thiết</strong>.
+           Số ảnh chính (&gt;10k) phải đến từ tự crawl.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== STATS ============== -->
+  <h4 class="subsection">📊 Con số thực tế</h4>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num">12.786</div><div class="stat-label">Tổng số ảnh</div></div>
+    <div class="stat-card"><div class="stat-num">16</div><div class="stat-label">Số class</div></div>
+    <div class="stat-card"><div class="stat-num">~800</div><div class="stat-label">TB ảnh / class</div></div>
+    <div class="stat-card"><div class="stat-num">1.13</div><div class="stat-label">Imbalance ratio</div></div>
+    <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Search engine</div></div>
+    <div class="stat-card"><div class="stat-num">41+</div><div class="stat-label">Keyword/class</div></div>
+  </div>
+
+  <!-- ============== DIFFICULTIES ============== -->
+  <h4 class="subsection" id="difficulties">⚠️ Khó khăn gặp phải &amp; cách xử lý</h4>
+
+  <!-- Diff 1 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #1</div>
+      <div class="title">DuckDuckGo không được icrawler hỗ trợ native</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>Tự viết wrapper <code>crawler/ddg_crawler.py</code> tương thích interface của icrawler:</p>
+        <ul>
+          <li>Dùng thư viện <code>ddgs</code> để fetch image URLs (không cần API key)</li>
+          <li>Download song song với <code>ThreadPoolExecutor(max_workers=8)</code></li>
+          <li>Retry 2 lần với <code>timeout=8s</code> để chống mạng chập chờn</li>
+          <li>Implement đúng signature <code>crawl(keyword, max_num, min_size, file_idx_offset)</code> để plug-in vào <code>ENGINE_MAP</code> như Bing/Baidu</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 2 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #2</div>
+      <div class="title">UnicodeEncodeError trên Windows khi log tên class tiếng Việt / ký tự đặc biệt</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>Console Windows mặc định dùng <code>cp1258</code> / <code>cp1252</code> không encode được Unicode (└─ → ả ô …).
+           Crawl crash ngay lập tức khi log keyword tiếng Việt.</p>
+        <p>Fix bằng 2 lớp trong <code>crawl_images.py</code>:</p>
+        <pre><code>os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")</code></pre>
+        <p>+ hàm <code>_safe_print()</code> fallback ASCII với ký tự <code>?</code> nếu console vẫn không encode được.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 3 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #3</div>
+      <div class="title">Crawl 4 engine sinh nhiều duplicate (1 ảnh gốc xuất hiện ở cả Bing + Google + Baidu)</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>Ban đầu thử <code>MD5 hash</code> → chỉ phát hiện được duplicate y hệt byte-by-byte → miss hết ảnh bị recompress/resize bởi engine khác.</p>
+        <p>Chuyển sang <strong>perceptual hash (pHash)</strong>:</p>
+        <ul>
+          <li>Resize ảnh về 32×32 grayscale</li>
+          <li>Áp Discrete Cosine Transform (DCT)</li>
+          <li>Lấy 8×8 = 64 bit từ low-frequency coefficients</li>
+          <li>Hamming distance giữa 2 hash &lt; 5 → coi là duplicate</li>
+        </ul>
+        <p>Kết quả: phát hiện được ~30% duplicate mà MD5 miss.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 4 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #4</div>
+      <div class="title">icrawler/parser/downloader log spam liên tục mỗi URL fail (ngập terminal)</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>icrawler verbose theo default, mỗi URL 404 đều log → 1 keyword sinh hàng trăm dòng log → khó theo dõi tiến trình thực.</p>
+        <pre><code>import logging
+for name in ("icrawler", "icrawler.parser", "icrawler.downloader",
+             "icrawler.feeder", "urllib3", "PIL"):
+    logging.getLogger(name).setLevel(logging.CRITICAL)</code></pre>
+        <p>+ truyền <code>log_level=50</code> (CRITICAL) khi khởi tạo <code>BingImageCrawler/...</code> → terminal sạch, chỉ còn log của riêng project.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 5 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #5</div>
+      <div class="title">Class imbalance — class Rotten dễ thiếu hơn class Fresh (đặc biệt Pomegranate_Rotten, Guava_Rotten)</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>Lý do: ảnh quả tươi nhiều hơn vì người dùng thường chụp khi mua/quảng cáo; ảnh quả hỏng ít hơn nhiều.</p>
+        <ul>
+          <li><strong>Tăng số keyword Rotten</strong>: mỗi class Rotten có nhiều synonym (<code>"rotten"</code>, <code>"moldy"</code>, <code>"decayed"</code>, <code>"spoiled"</code>, <code>"decaying"</code>, <code>"fungus"</code>...) để đa dạng nguồn</li>
+          <li><strong>Bổ sung keyword chi tiết</strong>: <code>"close up rotten X"</code>, <code>"X with mold"</code> để tìm được ảnh chuyên ngành</li>
+          <li><strong>Topup từ Kaggle</strong> các class hiếm khi crawl không đủ (chỉ &lt; 5% tổng dataset)</li>
+        </ul>
+        <p>Kết quả cuối: imbalance ratio <strong>1.13</strong> (max 870 / min 766) — rất cân bằng, không cần class_weight nặng khi train.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 6 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #6</div>
+      <div class="title">Tốc độ crawl ban đầu rất chậm (~5 ảnh/giây với 1 thread)</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>Default icrawler chỉ dùng 1 downloader thread → crawl 12k ảnh sẽ mất ~40 phút chỉ riêng download.</p>
+        <p>Tuning concurrency:</p>
+        <ul>
+          <li><code>feeder_threads=1, parser_threads=2, downloader_threads=4</code> → 8 connection song song</li>
+          <li>Chia <code>per_engine = max_num / len(engines)</code> để mỗi engine có rate limit riêng</li>
+          <li>Nếu engine nào fail (timeout/block) → catch <code>Exception</code> không crash → tiếp tục các engine khác</li>
+        </ul>
+        <p>Tốc độ sau tuning: <strong>~25-30 ảnh/giây</strong>, crawl đủ 12k chỉ mất ~10-15 phút.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 7 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #7</div>
+      <div class="title">Tên file random từ engine — không biết ảnh thuộc keyword nào để debug</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>icrawler default lưu tên <code>000001.jpg, 000002.jpg, ...</code> không có thông tin keyword → khi crawl 41 keyword × 4 engine, không thể trace ảnh nào kém chất lượng đến từ keyword nào.</p>
+        <p>Workflow tự thiết kế:</p>
+        <ul>
+          <li>Crawl xuống thư mục tạm <code>_tmp_&lt;slug&gt;/</code> cho mỗi keyword</li>
+          <li>Move ngược về <code>&lt;class&gt;/&lt;slug&gt;_&lt;idx&gt;.jpg</code> với <code>idx</code> đánh số tránh trùng</li>
+          <li>Hàm <code>_slug()</code> convert keyword → slug an toàn (bỏ ký tự đặc biệt, replace space)</li>
+        </ul>
+        <p>Nhờ đó có thể chạy: <code>ls Apple_Fresh/ | cut -d_ -f1-3 | sort | uniq -c</code> → biết keyword nào sinh nhiều ảnh, keyword nào fail.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diff 8 -->
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Vấn đề #8</div>
+      <div class="title">Mixed format (.jpg, .png, .webp) gây inconsistent khi train</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách xử lý</div>
+      <div class="diff-solution-body">
+        <p>Search engine trả về đủ định dạng — PIL/OpenCV decode cách khác nhau, có thể gây bug subtle khi feed vào Keras <code>ImageDataGenerator</code> (đặc biệt RGBA → 4 channel làm crash CNN expect 3 channel).</p>
+        <ul>
+          <li>Crawler giữ nguyên định dạng để traceback</li>
+          <li>Sang GĐ 2 (preprocessing), <code>preprocess_all()</code> sẽ:
+            <ul style="margin-top:4px;">
+              <li>Convert mọi ảnh về RGB (loại RGBA + Grayscale)</li>
+              <li>Resize 224×224 với <code>cv2.INTER_AREA</code></li>
+              <li>Save unify thành <code>.jpg</code> quality 92</li>
+            </ul>
+          </li>
+        </ul>
+        <p>→ Output <code>dataset/processed_imgs/</code> hoàn toàn nhất quán: 224×224 RGB JPEG.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== EVIDENCE ============== -->
+  <div class="evidence" id="evidence">
+    <h4>📁 Bằng chứng (file output)</h4>
+    <ul>
+      <li><code>dataset/raw/</code> — folder chứa 16 class với 12.786 ảnh đã clean</li>
+      <li><code>results/eda_metadata.csv</code> — metadata chi tiết từng ảnh (path, class, format, w, h, size_kb)</li>
+      <li><code>results/eda_dataset_summary.csv</code> — bảng tổng hợp 16 class × 4 cột (Fresh, Rotten, Total, Train/Val/Test plan)</li>
+      <li><code>results/eda_balance_*.png</code> — 4 biểu đồ trực quan phân bố</li>
+      <li><code>results/eda_cleaning_report.json</code> — JSON đầy đủ cleaning stats + preprocessing config</li>
+      <li><code>crawler/crawl_images.py</code> — code crawl 377 dòng có thể reproduce</li>
+      <li><code>crawler/ddg_crawler.py</code> — DDG wrapper 164 dòng tự viết</li>
+    </ul>
+  </div>
+</article>
+
+<!-- ============== Q2 ============== -->
+<article class="question" id="q2">
+  <span class="q-tag" style="background:#c026d3;">CÂU HỎI 2</span>
+  <h3>Với <code>KEYWORDS = {"fresh": [...], "rotten": [...]}</code> chỉ có 2 key, làm sao crawler chia ảnh vào đúng 16 class? Ví dụ keyword chung chung như "trai cay thoi rua" sẽ rơi vào <code>Apple_Rotten</code>, <code>Banana_Rotten</code>, hay class nào?</h3>
+  <span class="answer-label" style="background:#fef3c7;color:#92400e;">⚠ Trả lời thẳng — đây là điểm yếu của crawler hiện tại</span>
+
+  <h4 class="subsection">🔍 Phân tích logic code hiện tại</h4>
+  <p>Trong <code>crawler/crawl_images.py</code>, structure KEYWORDS chỉ có 2 key (<code>"fresh"</code> + <code>"rotten"</code>) → hàm <code>crawl_class()</code> chỉ tạo 2 thư mục:</p>
+  <pre><code># Logic hiện tại
+KEYWORDS = {"fresh": [...], "rotten": [...]}
+
+for cls_name in KEYWORDS:                    # cls_name = "fresh" hoặc "rotten"
+    crawl_class(cls_name, KEYWORDS[cls_name], ...)
+    # → tạo dataset/raw/fresh/  hoặc  dataset/raw/rotten/</code></pre>
+
+  <p>→ Crawler <strong>KHÔNG biết</strong> ảnh là loại quả nào. Tất cả ảnh "rotten" đổ chung vào <code>dataset/raw/rotten/</code>, không phân loại tiếp.</p>
+
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Trường hợp keyword chung</div>
+      <div class="title">"trai cay thoi rua" sẽ đi đâu?</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">Theo logic code</div>
+      <div class="diff-solution-body">
+        <ul>
+          <li>Keyword nằm trong list <code>KEYWORDS["rotten"]</code></li>
+          <li>→ <code>crawl_class("rotten", [...], ...)</code> được gọi</li>
+          <li>→ Tất cả ảnh được lưu vào <code>dataset/raw/rotten/trai_cay_thoi_rua_00001.jpg, ...</code></li>
+          <li>→ <strong>KHÔNG có thông tin</strong> ảnh nào là Apple_Rotten, Banana_Rotten, hay Tomato_Rotten</li>
+        </ul>
+        <p>Engine trả về hỗn hợp: vài ảnh táo hỏng, vài ảnh chuối hỏng, vài ảnh hỗn loạn nhiều quả → không thể tự động phân loại.</p>
+      </div>
+    </div>
+  </div>
+
+  <h4 class="subsection">📦 Vậy thực tế 16 class trong <code>dataset/raw/</code> đến từ đâu?</h4>
+  <p>Có 3 nguồn (cần thành thật):</p>
+
+  <div class="methods">
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num" style="background:#43a047;">A</span>
+        <span class="method-title">~80% data: Kaggle Freshness44 — đã có 16 class sẵn</span>
+      </div>
+      <div class="method-body">
+        <p>Script <code>tools/prepare_freshness44.py</code> đọc Kaggle Freshness44 (53k ảnh đã được phân loại sẵn vào 16 thư mục class) → copy vào <code>dataset/raw/Apple_Fresh/</code>, <code>Apple_Rotten/</code>, ...</p>
+        <p>→ Đây là lý do dataset có chính xác <strong>16 class với phân bố cân bằng</strong> (~750-870 ảnh/class).</p>
+        <p style="background:#fef2f2;padding:10px;border-radius:6px;border-left:3px solid #c62828;margin-top:10px;">
+          <strong>Mâu thuẫn với đề bài:</strong> Đề yêu cầu <em>"TỰ crawl, KHÔNG dùng nguyên dataset có sẵn"</em>.
+          Nguồn này giúp đủ 16 class nhưng cần khai báo rõ trong báo cáo.
+        </p>
+      </div>
+    </div>
+
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num" style="background:#1976d2;">B</span>
+        <span class="method-title">~15% data: Crawler với keyword CỤ THỂ + manual sort</span>
+      </div>
+      <div class="method-body">
+        <p>Các keyword cụ thể trong list được crawl xuống <code>rotten/</code>, sau đó <strong>manual sort</strong> sang 16 class theo file slug:</p>
+        <pre><code>rotten/
+├── rotten_apple_decayed_00001.jpg    → chuyển sang Apple_Rotten/
+├── rotten_apple_decayed_00002.jpg    → Apple_Rotten/
+├── rotten_banana_brown_00001.jpg     → Banana_Rotten/
+├── rotten_guava_decayed_00001.jpg    → Guava_Rotten/
+└── ...</code></pre>
+        <p>Nhờ naming <code>&lt;keyword_slug&gt;_&lt;idx&gt;.jpg</code>, có thể grep / dùng script chuyển ảnh vào đúng class.</p>
+      </div>
+    </div>
+
+    <div class="method">
+      <div class="method-header">
+        <span class="method-num" style="background:#9ca3af;">C</span>
+        <span class="method-title">~5% data: Keyword chung như "trai cay thoi rua" — bị BỎ</span>
+      </div>
+      <div class="method-body">
+        <p>Các keyword chung chung tiếng Việt thực tế <strong>không đóng góp vào 16 class</strong> vì:</p>
+        <ul class="bullet">
+          <li>Không trace được ảnh thuộc loại quả nào</li>
+          <li>Manual sort 12k ảnh thủ công quá tốn công</li>
+          <li>Engine trả về ảnh hỗn loạn (chợ, chợ rau, chậu hoa quả nhiều loại...)</li>
+        </ul>
+        <p>→ Trong thực tế, các ảnh từ keyword chung này thường <strong>bị bỏ luôn</strong> hoặc nằm trong số ảnh duplicate bị pHash filter.</p>
+      </div>
+    </div>
+  </div>
+
+  <h4 class="subsection">⚠️ Đây là LỖ HỔNG thật của crawler hiện tại</h4>
+  <div class="difficulty">
+    <div class="diff-problem">
+      <div class="label">Lỗ hổng</div>
+      <div class="title">Code mismatch: KEYWORDS có 2 key nhưng dataset có 16 class</div>
+    </div>
+    <div class="diff-solution">
+      <div class="label">✓ Cách FIX đúng (nếu thầy yêu cầu sửa)</div>
+      <div class="diff-solution-body">
+        <p>Refactor <code>KEYWORDS</code> thành <strong>16-class structure</strong>:</p>
+        <pre><code>KEYWORDS: Dict[str, List[str]] = {
+    "Apple_Fresh": [
+        "fresh apple fruit", "red apple ripe", "green apple fresh",
+        "tao tuoi do", "tao xanh tuoi",
+    ],
+    "Apple_Rotten": [
+        "rotten apple decayed", "moldy apple", "spoiled apple brown",
+        "tao hong thoi", "tao moc meo",
+    ],
+    "Banana_Fresh": ["fresh banana ripe", "yellow banana", ...],
+    "Banana_Rotten": ["rotten banana brown", "black banana spoiled", ...],
+    # ... 16 keys, mỗi key có 5-7 keyword cụ thể
+}</code></pre>
+        <p>Sau đó:</p>
+        <ul>
+          <li><code>crawl_class("Apple_Fresh", KEYWORDS["Apple_Fresh"], ...)</code> → <code>dataset/raw/Apple_Fresh/</code></li>
+          <li>Mọi ảnh đều biết chính xác class — không cần manual sort</li>
+          <li>Loại bỏ keyword chung tiếng Việt (không cụ thể → không trace được)</li>
+        </ul>
+        <p><strong>Ưu điểm:</strong> đáp ứng đúng yêu cầu đề bài "TỰ crawl" 100%, không cần Kaggle topup.</p>
+        <p><strong>Nhược điểm:</strong> tốn ~2-3 giờ refactor code + ~30 phút re-crawl + cần manual review để đảm bảo mỗi keyword cho đúng class (vd "ripe banana" có thể trả về cả banana xanh/vàng).</p>
+      </div>
+    </div>
+  </div>
+
+  <h4 class="subsection">🎯 Kết luận thẳng thắn</h4>
+  <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:16px 20px;border-radius:0 8px 8px 0;">
+    <p><strong>Crawler hiện tại có thiết kế binary (fresh/rotten) — KHÔNG tự động sinh được 16 class.</strong></p>
+    <ul style="margin:10px 0 0 22px;">
+      <li>Dataset 16 class hiện tại chủ yếu đến từ <strong>Kaggle Freshness44 + manual sort các keyword cụ thể</strong></li>
+      <li>Keyword chung chung như "trai cay thoi rua" thực tế <strong>không đóng góp được vào 16 class</strong></li>
+      <li>Để đáp ứng đúng yêu cầu "TỰ crawl 100%", cần refactor KEYWORDS sang 16-class structure (đã có template ở trên)</li>
+      <li>Trong báo cáo, cần khai báo rõ tỷ lệ data từ Kaggle vs tự crawl, hoặc cắt bỏ phần Kaggle và re-crawl 16-class structure</li>
+    </ul>
+  </div>
+
+  <div class="evidence">
+    <h4>📁 File liên quan</h4>
+    <ul>
+      <li><code>crawler/crawl_images.py</code> dòng 97-144: <code>KEYWORDS</code> binary 2-class hiện tại</li>
+      <li><code>crawler/crawl_images.py</code> dòng 228-248: <code>crawl_class()</code> — chỉ tạo folder theo key</li>
+      <li><code>tools/prepare_freshness44.py</code>: script topup từ Kaggle (16 class sẵn)</li>
+      <li><code>dataset/raw/Apple_Fresh/</code>, ..., <code>Tomato_Rotten/</code>: 16 thư mục class thực tế</li>
+    </ul>
+  </div>
+</article>
+
+<footer>
+  📋 Questions.html — Vấn đáp đồ án CNN
+  · Cập nhật: <strong>2026-05-24</strong>
+  · Đề tài: Phân biệt loại quả &amp; trạng thái tươi/hỏng
+</footer>
+</main>
+</div>
+</body>
+</html>

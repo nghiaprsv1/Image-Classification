@@ -94,52 +94,119 @@ for name in ("icrawler", "icrawler.parser", "icrawler.downloader",
 # ----------------------------------------------------------------------------
 # Tăng đa dạng: nhiều loại quả + rau, dùng tiếng Anh + Việt + đồng nghĩa.
 # File sẽ được lưu thành '<class>/<keyword_slug>_<idx>.jpg' để sau dễ thống kê.
+# KEYWORDS: Dict[str, List[str]] = {
+#     "fresh": [
+#         # Trái cây cơ bản
+#         "fresh apple fruit", "fresh banana ripe", "fresh orange fruit",
+#         "fresh tomato", "fresh strawberry", "fresh grape fruit",
+#         "fresh mango", "fresh pomegranate", "fresh guava fruit",
+#         "fresh papaya", "fresh pear fruit", "fresh peach fruit",
+#         "fresh watermelon slice", "fresh pineapple", "fresh kiwi fruit",
+#         "fresh lemon fruit", "fresh lime fruit", "fresh dragon fruit",
+#         "fresh avocado", "fresh blueberry",
+#         # Rau củ
+#         "fresh vegetables on table", "fresh cabbage head",
+#         "fresh carrot", "fresh lettuce green", "fresh broccoli",
+#         "fresh cucumber", "fresh bell pepper", "fresh potato",
+#         "fresh onion", "fresh spinach leaves", "fresh celery",
+#         "fresh eggplant", "fresh zucchini", "fresh corn cob",
+#         "fresh garlic bulb", "fresh ginger root", "fresh chili pepper",
+#         "fresh radish", "fresh sweet potato", "fresh pumpkin",
+#         # Tiếng Việt
+#         "rau cu tuoi", "trai cay tuoi ngon", "rau xanh sach",
+#         "qua tuoi cho", "ca chua tuoi", "tao tuoi do",
+#     ],
+#     "rotten": [
+#         # Trái cây hỏng — TĂNG MẠNH (đang thiếu)
+#         "rotten apple decayed", "rotten banana brown", "rotten orange mold",
+#         "rotten tomato spoiled", "rotten strawberry mold",
+#         "moldy grape decayed", "rotten mango spoiled",
+#         "rotten guava decayed", "rotten papaya black",
+#         "rotten pear", "rotten peach mold", "rotten watermelon",
+#         "moldy lemon", "decaying fruit close up", "spoiled fruit garbage",
+#         "fruit fungus growing", "rotten avocado brown",
+#         "moldy berries", "rotten pineapple",
+#         # Rau hỏng
+#         "rotten vegetables", "rotten cabbage decayed",
+#         "rotten carrot mold", "rotten lettuce wilted",
+#         "spoiled cucumber slimy", "moldy bell pepper",
+#         "rotten potato mold", "rotten onion decayed",
+#         "rotten spinach wilted", "rotten broccoli yellow",
+#         "moldy garlic", "decayed vegetables compost",
+#         "moldy fruit fungus", "rotten eggplant",
+#         "spoiled tomato squished", "wilted lettuce",
+#         "decomposing vegetables", "old vegetables fridge",
+#         # Tiếng Việt
+#         "rau cu hu thoi", "trai cay hu moc", "qua hong thoi",
+#         "rau hong moc meo", "trai cay thoi rua",
+#         "thuc pham hu thoi",
+#     ],
+# }
+
 KEYWORDS: Dict[str, List[str]] = {
-    "fresh": [
-        # Trái cây cơ bản
-        "fresh apple fruit", "fresh banana ripe", "fresh orange fruit",
-        "fresh tomato", "fresh strawberry", "fresh grape fruit",
-        "fresh mango", "fresh pomegranate", "fresh guava fruit",
-        "fresh papaya", "fresh pear fruit", "fresh peach fruit",
-        "fresh watermelon slice", "fresh pineapple", "fresh kiwi fruit",
-        "fresh lemon fruit", "fresh lime fruit", "fresh dragon fruit",
-        "fresh avocado", "fresh blueberry",
-        # Rau củ
-        "fresh vegetables on table", "fresh cabbage head",
-        "fresh carrot", "fresh lettuce green", "fresh broccoli",
-        "fresh cucumber", "fresh bell pepper", "fresh potato",
-        "fresh onion", "fresh spinach leaves", "fresh celery",
-        "fresh eggplant", "fresh zucchini", "fresh corn cob",
-        "fresh garlic bulb", "fresh ginger root", "fresh chili pepper",
-        "fresh radish", "fresh sweet potato", "fresh pumpkin",
-        # Tiếng Việt
-        "rau cu tuoi", "trai cay tuoi ngon", "rau xanh sach",
-        "qua tuoi cho", "ca chua tuoi", "tao tuoi do",
+    "Apple_Fresh": [
+        "fresh apple fruit", "red apple ripe", "green apple fresh",
+        "tao tuoi do", "tao xanh tuoi",
     ],
-    "rotten": [
-        # Trái cây hỏng — TĂNG MẠNH (đang thiếu)
-        "rotten apple decayed", "rotten banana brown", "rotten orange mold",
-        "rotten tomato spoiled", "rotten strawberry mold",
-        "moldy grape decayed", "rotten mango spoiled",
-        "rotten guava decayed", "rotten papaya black",
-        "rotten pear", "rotten peach mold", "rotten watermelon",
-        "moldy lemon", "decaying fruit close up", "spoiled fruit garbage",
-        "fruit fungus growing", "rotten avocado brown",
-        "moldy berries", "rotten pineapple",
-        # Rau hỏng
-        "rotten vegetables", "rotten cabbage decayed",
-        "rotten carrot mold", "rotten lettuce wilted",
-        "spoiled cucumber slimy", "moldy bell pepper",
-        "rotten potato mold", "rotten onion decayed",
-        "rotten spinach wilted", "rotten broccoli yellow",
-        "moldy garlic", "decayed vegetables compost",
-        "moldy fruit fungus", "rotten eggplant",
-        "spoiled tomato squished", "wilted lettuce",
-        "decomposing vegetables", "old vegetables fridge",
-        # Tiếng Việt
-        "rau cu hu thoi", "trai cay hu moc", "qua hong thoi",
-        "rau hong moc meo", "trai cay thoi rua",
-        "thuc pham hu thoi",
+    "Apple_Rotten": [
+        "rotten apple decayed", "moldy apple", "spoiled apple brown",
+        "tao hong thoi", "tao moc meo",
+    ],
+    "Banana_Fresh": [
+        "fresh banana ripe", "yellow banana", "green banana fresh",
+        "chuoi tuoi vang",
+    ],
+    "Banana_Rotten": [
+        "rotten banana brown", "black banana spoiled", "moldy banana",
+        "chuoi hong thoi",
+    ],
+    "Bellpepper_Fresh": [
+        "fresh bell pepper", "capsicum fresh green red yellow", "ripe bellpepper",
+        "ot chuong tuoi", "ot chuong xanh do vang",
+    ],
+    "Bellpepper_Rotten": [
+        "rotten bell pepper", "spoiled capsicum moldy", "decayed bellpepper",
+        "ot chuong thoi hong", "ot chuong moc meo",
+    ],
+    "Guava_Fresh": [
+        "fresh guava fruit", "ripe green guava", "fresh white guava",
+        "trai oi tuoi", "oi xanh tuoi",
+    ],
+    "Guava_Rotten": [
+        "rotten guava decayed", "spoiled guava brown", "moldy guava",
+        "oi thoi hong", "oi hu moc",
+    ],
+    "Lime_Fresh": [
+        "fresh lime green", "sour lime fruit", "juicy green lime",
+        "chanh xanh tuoi", "trai chanh tuoi",
+    ],
+    "Lime_Rotten": [
+        "rotten lime decayed", "moldy lime brown", "spoiled green lime",
+        "chanh thoi hong", "chanh moc meo hu",
+    ],
+    "Orange_Fresh": [
+        "fresh orange fruit", "ripe citrus orange", "juicy orange sweet",
+        "cam tuoi ngon", "trai cam chin vang",
+    ],
+    "Orange_Rotten": [
+        "rotten orange moldy", "spoiled orange decayed", "moldy citrus fruit",
+        "cam thoi hong", "cam moc meo xanh",
+    ],
+    "Pomegranate_Fresh": [
+        "fresh pomegranate fruit", "ripe red pomegranate seeds", "opened pomegranate fresh",
+        "luu do tuoi", "trai luu chin ngon",
+    ],
+    "Pomegranate_Rotten": [
+        "rotten pomegranate decayed", "spoiled pomegranate moldy", "bad brown pomegranate",
+        "luu thoi hong", "trai luu hu thoi",
+    ],
+    "Tomato_Fresh": [
+        "fresh red tomato", "ripe tomato organic", "fresh green tomato",
+        "ca chua tuoi", "ca chua chin do",
+    ],
+    "Tomato_Rotten": [
+        "rotten tomato decayed", "moldy spoiled tomato", "mushy bad tomato",
+        "ca chua thoi", "ca chua dập nát hu",
     ],
 }
 
